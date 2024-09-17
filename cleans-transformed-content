@@ -1,0 +1,42 @@
+import re
+from dotenv import load_dotenv
+
+def clean_whitespace_in_p_tags(file_path, output_file):
+    # Open and read the content of the file
+    with open(file_path, 'r') as file:
+        file_content = file.read()
+
+    # Define the regex pattern to match <p> tags with data-text-version="transformed"
+    pattern = re.compile(r'(<p\s+[^>]*data-text-version="transformed"[^>]*>)(.*?)(</p>)', re.DOTALL)
+
+    # Function to strip leading and trailing whitespace inside <p> tags
+    def replace_whitespace(match):
+        # Capture the opening <p> tag, the content inside it, and the closing </p> tag
+        opening_tag = match.group(1)
+        inner_content = match.group(2).strip()  # Remove leading and trailing whitespace
+        closing_tag = match.group(3)
+
+        # Return the cleaned up <p> tag
+        return f"{opening_tag}{inner_content}{closing_tag}"
+
+    # Use sub() to replace the content with whitespace removed
+    cleaned_content = re.sub(pattern, replace_whitespace, file_content)
+
+    # Write the updated content to the output file
+    with open(output_file, 'w') as output:
+        output.write(cleaned_content)
+
+    print(f"File '{output_file}' has been updated with cleaned <p> tags.")
+
+
+# Example usage:
+
+file_path = os.getenv('clean_file')
+output_file = os.getenv('output')
+
+# Clean whitespace in <p> tags and write to the output file
+clean_whitespace_in_p_tags(file_path, output_file)
+
+# Optional: Print the cleaned content (for verification)
+with open(output_file, 'r') as output:
+    print(output.read())
