@@ -1,0 +1,80 @@
+import re
+
+def copy_and_replace_inner_text(source_file, destination_file, output_file):
+    # Step 1: Read the source file and find the starting marker
+    with open(source_file, 'r') as src:
+        source_content = src.read()
+
+    # The marker after which we want to start processing
+    start_marker = '<p id="id_3znysh7" class="block_8">I</p>'
+
+    # Step 1.1: Check if the marker exists in the source content
+    if start_marker in source_content:
+        # Only start processing after the marker
+        _, source_content_after_marker = source_content.split(start_marker, 1)
+    else:
+        print("Start marker not found in the source file. Exiting the function.")
+        return  # Exit the function if the marker is not found
+
+    # Step 1.2: Remove any <span class="text_#"> tags from the source content
+    # This regex finds any <span class="text_#"> and removes the entire span element, but preserves the text outside the span
+    pattern_span = re.compile(r'<span class="text_\d+">(.*?)</span>', re.DOTALL)
+    source_content_cleaned = re.sub(pattern_span, r'\1', source_content_after_marker)
+
+    # Improved regex to match <p> tags with either class or id attributes (more flexible with spacing)
+    pattern_source = re.compile(r'(<p\s+[^>]*(?:class="[^"]*"|id="[^"]*")[^>]*>)(.*?)</p>', re.DOTALL)
+
+    # Find all matches (p tags with class or id) in the source file after the marker
+    source_matches = pattern_source.findall(source_content_cleaned)
+
+    # Debugging: Check if the regex found anything
+    if not source_matches:
+        print("No matching paragraphs with class or id found in the source file after the marker.")
+        return
+
+    # Step 2: Read the destination file line by line
+    with open(destination_file, 'r') as dest:
+        destination_content = dest.read()
+
+    # Improved regex to target <p> tags with specific class and attributes in the destination file
+    pattern_destination = re.compile(r'(<p\s+[^>]*data-text-version="transformed"[^>]*>)(.*?)(</p>)', re.DOTALL)
+
+    # Initialize an index for source matches
+    source_index = 0
+
+    # Step 3: Replace content inside the destination <p> tags with the corresponding source content
+    def replacement_function(match):
+        nonlocal source_index
+        if source_index < len(source_matches):
+            # Get the inner content from the corresponding source match
+            new_content = source_matches[source_index][1].strip()
+            source_index += 1
+            return f"{match.group(1)} {new_content} {match.group(3)}"
+        return match.group(0)  # If no more source matches, return the original content
+
+    # Use sub to replace the content in the destination file
+    updated_content = re.sub(pattern_destination, replacement_function, destination_content)
+
+    # Step 4: Write the updated content to a new output file
+    with open(output_file, 'w') as output:
+        output.write(updated_content)
+
+    # Debugging: Print the updated content to be written to the output file
+    print("Updated Output File Content:\n", updated_content)
+
+    print(f"Replacement complete. The updated content has been written to {output_file}.")
+
+# Example usage:
+
+
+source_file = [file with new transformed]
+destination_file = [file with standard and outdated transformed]
+output_file = [outputfile]
+
+# Call the function to copy and replace the inner text from <p> tags with class or id in the source
+copy_and_replace_inner_text(source_file, destination_file, output_file)
+
+# Verify the result
+with open(output_file, 'r') as output:
+    print("Updated Output File Content:")
+    print(output.read())
